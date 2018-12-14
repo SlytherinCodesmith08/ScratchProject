@@ -2,3 +2,40 @@
   height: 50vh; /* The height is 400 pixels */
   width: 100%; /* The width is the width of the web page */
 }
+
+.logo {
+  font-size: 8vh;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.form {
+  padding-top: 5vh;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-div {
+  margin: 2vh;
+}
+
+.meal-description {
+  min-width: 30rem;
+  min-height: 15rem;
+}
+
+.event-host {
+  font-size: 15px;
+}
+
+.event-description {
+  font-size: 15px;
+}
+
+.event-time {
+  font-size: 15px;
+}
+
+.event-capacity {
+  font-size: 13px;
+}
