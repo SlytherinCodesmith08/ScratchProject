@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import ChefForm from './ChefForm';
+<<<<<<< HEAD
 import TasteeForm from './TasteeForm';
 import Slider from './Slider';
+=======
+import SigninButton from './SigninButton';
+>>>>>>> OAuth
 import { InfoWindowContent } from './InfoWindowContent';
 import { events } from './TestEvents';
 const initialOffset = 0.00068;
@@ -128,7 +132,11 @@ export default class App extends Component {
         <section>
           <div id="map" />
         </section>
+<<<<<<< HEAD
         <Slider UNITS={UNITS} updateRadius={this.updateRadius.bind(this)} />
+=======
+        <SigninButton/>
+>>>>>>> OAuth
         <button onClick={this.toggle.bind(this)}>Toggle </button>
         <ChefForm
           toggle={this.state.toggle}
