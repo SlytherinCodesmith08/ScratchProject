@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import ChefForm from './ChefForm';
+import SigninButton from './SigninButton';
 import { InfoWindowContent } from './InfoWindowContent';
 import { events } from './TestEvents';
 const initialOffset = 0.00068;
@@ -97,6 +98,7 @@ export default class App extends Component {
         <section>
           <div id="map" />
         </section>
+        <SigninButton/>
         <button onClick={this.toggle.bind(this)}>Toggle </button>
         <ChefForm addMarker={this.addMarker.bind(this)} />
       </div>
