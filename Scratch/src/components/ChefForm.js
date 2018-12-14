@@ -37,46 +37,48 @@ export default class ChefForm extends Component {
   }
 
   render() {
-    return (
-      <form onSubmit={this.handleOnSubmit}>
-        <div className="form">
-          <div className="form-div">
-            <h3>What are you cooking?</h3>
-            <textarea
-              className="meal-description"
-              name="description"
-              value={this.state.name}
-              onChange={this.handleDescriptionChange}
-              required
-            />
-          </div>
-          <div className="form-div">
-            <div>
-              <h3>When will your meal be ready?</h3>
-              <input
-                type="time"
-                onChange={this.handleTimeChange}
-                id="appt"
-                name="appt"
+    if (this.props.toggle === 0) {
+      return (
+        <form onSubmit={this.handleOnSubmit}>
+          <div className="form">
+            <div className="form-div">
+              <h3>What are you cooking?</h3>
+              <textarea
+                className="meal-description"
+                name="description"
+                value={this.state.name}
+                onChange={this.handleDescriptionChange}
                 required
               />
             </div>
-            <div>
-              <h3>How many people can you host?</h3>
-              <input
-                type="number"
-                name="quantity"
-                min="1"
-                max={LIMIT}
-                value={this.state.capacity}
-                onChange={this.handleCapacityChange}
-              />
+            <div className="form-div">
+              <div>
+                <h3>When will your meal be ready?</h3>
+                <input
+                  type="time"
+                  onChange={this.handleTimeChange}
+                  id="appt"
+                  name="appt"
+                  required
+                />
+              </div>
+              <div>
+                <h3>How many people can you host?</h3>
+                <input
+                  type="number"
+                  name="quantity"
+                  min="1"
+                  max={LIMIT}
+                  value={this.state.capacity}
+                  onChange={this.handleCapacityChange}
+                />
+              </div>
+              <input type="submit" value="Submit" />
+              <br />
             </div>
-            <input type="submit" value="Submit" />
-            <br />
           </div>
-        </div>
-      </form>
-    );
+        </form>
+      );
+    } else return <div />;
   }
 }

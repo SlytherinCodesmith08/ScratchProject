@@ -1,23 +1,32 @@
 import React, { Component } from 'react';
 import ChefForm from './ChefForm';
+import TasteeForm from './TasteeForm';
+import Slider from './Slider';
 import { InfoWindowContent } from './InfoWindowContent';
 import { events } from './TestEvents';
 const initialOffset = 0.00068;
-
+const UNITS = 200;
 export default class App extends Component {
   constructor() {
     super();
-    this.state = { toggle: 0 };
+    this.state = { toggle: 0, map: null, circle: null };
   }
   componentDidMount() {
     this.initMap();
-    this.populateMap();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.map !== prevState.map) {
+      this.populateMap();
+      this.initCircle();
+    }
   }
 
   addMarker(event) {
+    const map = this.state.map;
     const marker = new google.maps.Marker({
       position: event.pos,
-      map: this.map
+      map: map
     });
     const description = InfoWindowContent(event);
     const infoWindow = new google.maps.InfoWindow({
@@ -32,10 +41,29 @@ export default class App extends Component {
   }
 
   populateMap() {
-    const map = this.map;
     for (let chef of events) {
       this.addMarker(chef);
     }
+  }
+
+  initCircle() {
+    const map = this.state.map;
+    const cityCircle = new google.maps.Circle({
+      strokeColor: '#000099',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#6699ff',
+      fillOpacity: 0.35,
+      map: map,
+      center: map.getCenter(),
+      radius: 1 * UNITS
+    });
+    this.setState({ circle: cityCircle });
+  }
+
+  updateRadius(slider) {
+    const circle = this.state.circle;
+    circle.setRadius(slider * UNITS);
   }
 
   initMap() {
@@ -46,11 +74,11 @@ export default class App extends Component {
       zoom: 4,
       center: uluru
     });
-    this.map = map;
     const infoWindow = new google.maps.InfoWindow();
 
     // Try HTML5 geolocation.
     if (navigator.geolocation) {
+      var self = this;
       navigator.geolocation.getCurrentPosition(
         function(position) {
           var pos = {
@@ -73,6 +101,8 @@ export default class App extends Component {
             infoWindow.open(map, marker);
           });
           map.panTo(marker.position);
+
+          self.setState({ map: map });
         },
         function() {
           handleLocationError(true, infoWindow, map.getCenter());
@@ -88,6 +118,7 @@ export default class App extends Component {
     const toggle = this.state.toggle === 0 ? 1 : 0;
     this.setState({ toggle });
   }
+
   render() {
     return (
       <div>
@@ -97,8 +128,13 @@ export default class App extends Component {
         <section>
           <div id="map" />
         </section>
+        <Slider UNITS={UNITS} updateRadius={this.updateRadius.bind(this)} />
         <button onClick={this.toggle.bind(this)}>Toggle </button>
-        <ChefForm addMarker={this.addMarker.bind(this)} />
+        <ChefForm
+          toggle={this.state.toggle}
+          addMarker={this.addMarker.bind(this)}
+        />
+        <TasteeForm map={this.map} toggle={this.state.toggle} />
       </div>
     );
   }
