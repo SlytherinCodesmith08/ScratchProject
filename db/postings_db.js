@@ -1,95 +1,84 @@
-const Sequelize = require('sequelize');
-const sequelize = new Sequelize('cooking_app', 'ray', '', {
+const { Client } = require('pg')
+const client = new Client({
+    user: 'ray',
     host: 'localhost',
-    dialect: 'postgres' // pick one of 'mysql','sqlite','postgres','mssql',
-});
+    database: 'cooking_app',
+    password: '',
+    port: 5432,
+})
 
-const user_db = require('./users_db');
-
-const Posting = sequelize.define('posting', {
-    pid: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    title: {
-        type: Sequelize.STRING
-    },
-    description: {
-        type: Sequelize.STRING
-    },
-    capacity: {
-        type: Sequelize.STRING
-    },
-    lat: {
-        type: Sequelize.FLOAT
-    },
-    lon: {
-        type: Sequelize.FLOAT
-    }
-});
-
-Posting.hasMany(user_db.User, {as:'subscribers'});
-// Posting.sync({force: true});
+client.connect();
 
 // force: true will drop the table if it already exists
 let addPosting = function (title, description, capacity, lat, lon, cb) {
-    return Posting.create({ title, description, capacity, lat, lon })
-        .then((posting) => {
-            // console.log(posting);
+    let query = "INSERT INTO postings(title, description, capacity, lat, lon) VALUES($1, $2, $3, $4, $5) RETURNING *";
+    let values = [title, description, capacity, lat, lon];
+    return client.query(query, values)
+        .then((res) => {
+            console.log(res.rows[0]);
             cb();
         })
-        .catch((err) => { console.error(err); });
+        .catch((err) => {
+            console.error(err.stack);
+        });
 };
 
 let getAllPostings = function (cb) {
-    return Posting.all()
-        .then((postings) => {
-            cb(postings);
+    return client.query('SELECT * FROM postings;')
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
+        .catch((e) => {
+            console.error(e.stack);
+        });
 };
 
-let getPosting = function (id, cb) {
-    return Posting.findOne({ where: { id }})
-        .then((posting) => {
-            cb(posting);
+let getPostingByID = function (id, cb) {
+    const query = {
+        text: 'SELECT * FROM postings WHERE id=$1;',
+        values: [id]
+    }
+    return client.query(query)
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
+        .catch((e) => {
+            console.error(e.stack);
+        });
 }
 
 let addPostingToUser = function (userID, postingID, cb) {
-    return Posting.findOne({pid: postingID})
-        .then((post) => {
-            user_db.User.findOne({uid: userID})
-                .then((user) => {
-                    posting.setUsers([user]);
-                    cb();
-                });
-
-            // user.setPosting([posting]).success((res) => {
-            //     console.log(res);
-            //     cb();
-            // })
+    const query = "INSERT INTO subscribedusers(pid, uid) VALUES($1, $2) RETURNING *;";
+    let values = [userID, postingID];
+    return client.query(query, values)
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
+        .catch((e) => {
+            console.error(e.stack);
+        });
 };
 
-let testing = function (cb) {
-    return Posting.findAll({
-        include: [{
-            model: user_db.User,
-        }]
-    })
-    .then((res) => { cb(res); })
-    .catch((err) => { console.error(err); });
+let approveUserToPost = function(userID, postingID, cb) {
+    const query = "UPDATE subscribedusers SET approved=true WHERE uid=$1 AND pid=$2";
+    let values = [userID, postingID];
+    return client.query(query, values)
+        .then((res) => {
+            console.log(res.rows);
+            cb();
+        })
+        .catch((e) => {
+            console.error(e);
+        });
 }
 
 module.exports = { 
     addPosting,
     getAllPostings,
-    getPosting,
-    Posting,
-    testing,
-    addPostingToUser
+    getPostingByID,
+    addPostingToUser,
+    approveUserToPost
 }

@@ -44,10 +44,10 @@ app.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-app.post('/users', upload.single('image'), function(req, res, next) {
-  let { firstName, lastName, email, lat, lon } = req.body;
-  let { path } = req.file;
-  return userDB.addUser(firstName, lastName, email, lat, lon, path, () => {
+app.post('/users', function(req, res, next) {
+  let { firstName, lastName, email, phoneNumber, lat, lon } = req.body;
+  let { path } = "";//req.file;
+  return userDB.addUser(firstName, lastName, email, phoneNumber, lat, lon, path, () => {
     res.status(204).end();
   });
 });
@@ -88,21 +88,30 @@ app.get('/postings', function(req, res, next) {
 
 app.get('/postings/:id', function(req, res, next) {
   let postingID = req.params.id;
-  postingDB.getPosting(postingID, (data) => {
+  postingDB.getPostingByID(postingID, (data) => {
     res.send(data);
   });
 });
 
-app.get('/addToPost/:id', function(req, res, next) {
-  // postingDB.getPosting(5, function(post) {
-    postingDB.addPostingToUser(1, 1, () => {
-      res.end();
-    // });
-    });
-    postingDB.testing((result) => {
-      console.log(result);
-      res.end();
-    });
+app.post('/addUser/:uid/toPost/:pid', function(req, res, next) {
+  let {uid, pid} = req.params;
+  userDB.addUserToPosting(uid, pid, () => {
+    res.status(204).end();
+  });
+});
+
+app.get('/getSubscribedusers/:pid', function(req, res, next) {
+  let { pid } = req.params;
+  userDB.getUsersForAPosting(1, (data) => {
+    res.send(data);
+  });
+});
+
+app.post('/approveUser/:uid/toPost/:pid', function(req, res, next) {
+  let { uid, pid } = req.params;
+  postingDB.approveUserToPost(uid, pid, () => {
+    res.end();
+  });
 });
 
 // catch 404 and forward to error handler

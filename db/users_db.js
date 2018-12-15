@@ -1,100 +1,80 @@
-const Sequelize = require('sequelize');
-const sequelize = new Sequelize('cooking_app', 'ray', '', {
+const { Client } = require('pg')
+const client = new Client({
+    user: 'ray',
     host: 'localhost',
-    dialect: 'postgres' // pick one of 'mysql','sqlite','postgres','mssql',
-});
+    database: 'cooking_app',
+    password: '',
+    port: 5432,
+})
 
-const posting_db = require('./postings_db');
-
-const User = sequelize.define('user', {
-    uid: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    firstName: {
-        type: Sequelize.STRING
-    },
-    lastName: {
-        type: Sequelize.STRING
-    },
-    email: {
-        type: Sequelize.STRING
-    },
-    lat: {
-        type: Sequelize.FLOAT
-    },
-    lon: {
-        type: Sequelize.FLOAT
-    },
-    image: {
-        type: Sequelize.STRING
-    },
-    postingPID: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'postings',
-            key: 'pid'
-        },
-        onDelete: 'CASCADE'
-    }
-});
-
-// User.belongsTo(posting_db.Posting, { foreignKey: 'postingPID', targetKey: 'pid' });
-User.sync({force: true});
+client.connect();
 
 // force: true will drop the table if it already exists
-let addUser = function (firstName, lastName, email, lat, lon, imagePath, cb) {
-    return User.create({ firstName, lastName, email, lat, lon, image: imagePath })
-        .then((user) => {
-            // console.log(user);
+let addUser = function (firstName, lastName, email, phoneNumber, lat, lon, imagePath, cb) {
+    let query = "INSERT INTO users(firstName, lastName, email, phoneNumber, lat, lon) VALUES($1, $2, $3, $4, $5, $6) RETURNING *;";
+    let values = [firstName, lastName, email, phoneNumber, lat, lon];
+    return client.query(query, values)
+        .then((res) => {
+            console.log(res.rows[0]);
             cb();
         })
-        .catch((err) => { console.error(err); });
+        .catch((err) => {
+            console.error(err.stack);
+        });
 };
 
 let getAllUsers = function (cb) {
-    return User.all()
-        .then((users) => {
-            cb(users);
+    return client.query('SELECT * FROM users;')
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
+        .catch((e) => {
+            console.error(e.stack);
+        });
 };
 
 let getUserByID = function (id, cb) {
-    return User.findOne({ where: { id }})
-        .then((user) => {
-            cb(user);
+    const query = {
+        text: 'SELECT * FROM users WHERE id=$1;',
+        values: [id]
+    }
+    return client.query(query)
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
+        .catch((e) => {
+            console.error(e.stack);
+        });
 }
 
 let addUserToPosting = function (userID, postingID, cb) {
-    return User.findOne({uid: userID})
-        .then((user) => {
-            posting_db.Posting.findOne({pid: postingID})
-                .then((posting) => {
-                    user.setPosting(posting);
-                    cb();
-                });
-
-            // user.setPosting([posting]).success((res) => {
-            //     console.log(res);
-            //     cb();
-            // })
+    const query = "INSERT INTO subscribedusers(pid, uid) VALUES($1, $2) RETURNING *;";
+    let values = [postingID, userID];
+    return client.query(query, values)
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
         })
-        .catch((err) => { console.error(err); });
-};
+        .catch((e) => {
+            console.error(e.stack);
+        });
+}
 
-let testing = function (cb) {
-    return User.findAll({
-        include: [{
-            model: posting_db.Posting,
-        }]
-    })
-    .then((res) => { cb(res); })
-    .catch((err) => { console.error(err); });
+let getUsersForAPosting = function (pid, cb) {
+    const query = {
+        text: 'SELECT su.pid, u.id, u.firstname, u.lastname, u.email, u.phoneNumber, u.lat, u.lon FROM subscribedusers as su, users as u WHERE u.id=su.uid AND pid = $1;',
+        values: [pid]
+    }
+    return client.query(query)
+        .then((res) => {
+            console.log(res.rows);
+            cb(res.rows);
+        })
+        .catch((e) => {
+            console.error(e.stack);
+        });
 }
 
 module.exports = {
@@ -102,6 +82,5 @@ module.exports = {
     getAllUsers,
     getUserByID,
     addUserToPosting,
-    testing,
-    User
+    getUsersForAPosting,
 }
