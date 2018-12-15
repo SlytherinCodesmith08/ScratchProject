@@ -13,13 +13,14 @@ export default class SubscribersList extends Component {
   }
 
   render() {
-    if (this.props.toggle === 'chef' && this.props.loggedIn === true) {
-      return (
-        <div>
-          <h2>Subscribers List</h2>
-          <ul>{this.renderList()}</ul>
-        </div>
-      );
-    } else return <div />;
+    // if (this.props.toggle === 'chef' && this.props.loggedIn === true) {
+    //   return (
+    //     <div>
+    //       <h2>Subscribers List</h2>
+    //       <ul>{this.renderList()}</ul>
+    //     </div>
+    //   );
+    // } else
+    return <div />;
   }
 }
