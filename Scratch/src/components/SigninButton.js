@@ -1,26 +1,36 @@
 import React, { Component } from 'react';
-
+import GoogleLogin from 'react-google-login';
+import { GoogleLogout } from 'react-google-login';
 export default class SigninButton extends Component {
   constructor(props) {
     super(props);
-    this.signOut = this.signOut.bind(this);
   }
 
-  signOut() {
-    var auth2 = gapi.auth2.getAuthInstance();
-    auth2.signOut().then(function () {
-      console.log('User signed out.');
-    });
+  responseGoogle(response) {
+    this.props.toggleSignIn(response);
   }
 
+  logout() {
+    console.log('logout');
+    this.props.toggleSignIn();
+  }
 
   render() {
-    return (
-      <div>
-        <div className="g-signin2" data-onsuccess="onSignIn"></div>
-        <a href="#" onClick={this.signOut}>Sign out</a>
-      </div>
-    );
+    if (this.props.loggedIn === false) {
+      return (
+        <GoogleLogin
+          clientId="179151549004-bq1f71sg2fhgfesr1bf7g6f83dk256jo.apps.googleusercontent.com"
+          buttonText="Login"
+          onSuccess={this.responseGoogle.bind(this)}
+          onFailure={this.responseGoogle.bind(this)}
+        />
+      );
+    } else
+      return (
+        <GoogleLogout
+          buttonText="Logout"
+          onLogoutSuccess={this.logout.bind(this)}
+        />
+      );
   }
-
-};
+}

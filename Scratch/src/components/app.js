@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import ChefForm from './ChefForm';
-<<<<<<< HEAD
+import SigninButton from './SigninButton';
 import TasteeForm from './TasteeForm';
 import Slider from './Slider';
-=======
-import SigninButton from './SigninButton';
->>>>>>> OAuth
+
 import { InfoWindowContent } from './InfoWindowContent';
 import { events } from './TestEvents';
 const initialOffset = 0.00068;
@@ -13,10 +11,22 @@ const UNITS = 200;
 export default class App extends Component {
   constructor() {
     super();
-    this.state = { toggle: 0, map: null, circle: null };
+    this.state = {
+      loggedIn: false,
+      toggle: 'chef',
+      map: null,
+      circle: null,
+      user: null,
+      currentLocation: null,
+      radius: 200,
+      userList: []
+    };
   }
+
   componentDidMount() {
     this.initMap();
+    this.getUsers();
+    this.populateMap();
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -26,27 +36,68 @@ export default class App extends Component {
     }
   }
 
-  addMarker(event) {
+  getUsers() {
+    fetch('/users', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      }
+    })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(myJson) {
+        this.setState({ userList: myJson });
+      });
+  }
+
+  sendData(info) {
+    const post = Object.assign({}, this.state.user);
+    post.description = info.description;
+    post.capacity = info.capacity;
+    post.title = info.title;
+    post.location = this.state.currentLocation;
+    console.log(post);
+    fetch('/postings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      }
+    })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(myJson) {
+        console.log(JSON.stringify(myJson));
+      });
+  }
+
+  addMarker(info) {
     const map = this.state.map;
     const marker = new google.maps.Marker({
-      position: event.pos,
+      position: info.currentLocation,
       map: map
     });
-    const description = InfoWindowContent(event);
+    const description = InfoWindowContent(
+      info.givenName + ' ' + info.familyName,
+      info
+    );
     const infoWindow = new google.maps.InfoWindow({
       content: description,
       maxWidth: 200
     });
-    infoWindow.setPosition(event.pos);
+    infoWindow.setPosition(info.currentLocation);
 
     marker.addListener('click', function() {
       infoWindow.open(map, marker);
     });
+
+    this.sendData(info);
   }
 
   populateMap() {
-    for (let chef of events) {
-      this.addMarker(chef);
+    for (let user of this.state.userList) {
+      this.addMarker(user);
     }
   }
 
@@ -68,6 +119,7 @@ export default class App extends Component {
   updateRadius(slider) {
     const circle = this.state.circle;
     circle.setRadius(slider * UNITS);
+    this.setState({ radius: slider * UNITS });
   }
 
   initMap() {
@@ -100,13 +152,12 @@ export default class App extends Component {
           map.setCenter(pos);
           map.setZoom(16);
           // The marker, positioned at Uluru
-          var marker = new google.maps.Marker({ position: pos, map: map });
-          marker.addListener('click', function() {
-            infoWindow.open(map, marker);
-          });
-          map.panTo(marker.position);
-
-          self.setState({ map: map });
+          // var marker = new google.maps.Marker({ position: pos, map: map });
+          // marker.addListener('click', function() {
+          //   infoWindow.open(map, marker);
+          // });
+          // map.panTo(marker.position);
+          self.setState({ map: map, currentLocation: pos });
         },
         function() {
           handleLocationError(true, infoWindow, map.getCenter());
@@ -119,11 +170,33 @@ export default class App extends Component {
   }
 
   toggle() {
-    const toggle = this.state.toggle === 0 ? 1 : 0;
+    const toggle = this.state.toggle === 'chef' ? 'tastee' : 'chef';
     this.setState({ toggle });
   }
 
+  toggleSignIn(response) {
+    const loggedIn = this.state.loggedIn === true ? false : true;
+    const map = this.state.map;
+    let user = null;
+    if (loggedIn === true) {
+      // console.log(response);
+      const profileObj = response.profileObj;
+      const userObj = {
+        email: profileObj.email,
+        familyName: profileObj.familyName,
+        givenName: profileObj.givenName,
+        imageUrl: profileObj.imageUrl,
+        location: map.getCenter(),
+        radius: this.state.radius
+      };
+      user = userObj;
+    }
+
+    this.setState({ loggedIn, user });
+  }
+
   render() {
+    // console.log(this.state);
     return (
       <div>
         <section>
@@ -132,17 +205,22 @@ export default class App extends Component {
         <section>
           <div id="map" />
         </section>
-<<<<<<< HEAD
         <Slider UNITS={UNITS} updateRadius={this.updateRadius.bind(this)} />
-=======
-        <SigninButton/>
->>>>>>> OAuth
         <button onClick={this.toggle.bind(this)}>Toggle </button>
+        <SigninButton
+          loggedIn={this.state.loggedIn}
+          toggleSignIn={this.toggleSignIn.bind(this)}
+        />
         <ChefForm
+          loggedIn={this.state.loggedIn}
           toggle={this.state.toggle}
           addMarker={this.addMarker.bind(this)}
         />
-        <TasteeForm map={this.map} toggle={this.state.toggle} />
+        <TasteeForm
+          loggedIn={this.state.loggedIn}
+          map={this.map}
+          toggle={this.state.toggle}
+        />
       </div>
     );
   }

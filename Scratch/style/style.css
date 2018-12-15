@@ -28,8 +28,12 @@
   font-size: 15px;
 }
 
-.event-description {
+.event-title {
   font-size: 15px;
+}
+
+.event-description {
+  font-size: 25px;
 }
 
 .event-time {

@@ -17,7 +17,7 @@ export default class TasteeForm extends Component {
   }
 
   render() {
-    if (this.props.toggle === 1) {
+    if (this.props.toggle === 'tastee' && this.props.loggedIn === true) {
       return (
         <form onSubmit={this.handleOnSubmit}>
           <div className="form">

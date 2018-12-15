@@ -1,14 +1,20 @@
 import React, { Component } from 'react';
 
+import SubscribersList from './SubscribersList';
 const LIMIT = 10;
 export default class ChefForm extends Component {
   constructor(props) {
     super(props);
-    this.state = { description: '', time: '', capacity: 0 };
+    this.state = { description: '', time: '', title: '', capacity: 0 };
     this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
     this.handleTimeChange = this.handleTimeChange.bind(this);
     this.handleCapacityChange = this.handleCapacityChange.bind(this);
+    this.handleTitleChange = this.handleTitleChange.bind(this);
     this.handleOnSubmit = this.handleOnSubmit.bind(this);
+  }
+
+  handleTitleChange(e) {
+    this.setState({ title: e.target.value });
   }
 
   handleDescriptionChange(e) {
@@ -24,24 +30,35 @@ export default class ChefForm extends Component {
     this.setState({ capacity: capacity });
   }
 
+  handleTitleChange(e) {
+    this.setState({ title: e.target.value });
+  }
+
   handleOnSubmit(e) {
     e.preventDefault();
     const info = {
-      host: 'Loser Girl',
+      title: this.state.title,
       description: this.state.description,
       time: this.state.time,
-      capacity: this.state.capacity,
-      pos: { lat: 40.72127, lng: -74.000723 }
+      capacity: this.state.capacity
     };
     this.props.addMarker(info);
   }
 
   render() {
-    if (this.props.toggle === 0) {
+    if (this.props.toggle === 'chef' && this.props.loggedIn === true) {
       return (
         <form onSubmit={this.handleOnSubmit}>
           <div className="form">
             <div className="form-div">
+              <h3>Title</h3>
+              <input
+                type="text"
+                name="title"
+                value={this.state.title}
+                onChange={this.handleTitleChange}
+                required
+              />
               <h3>What are you cooking?</h3>
               <textarea
                 className="meal-description"
@@ -76,6 +93,10 @@ export default class ChefForm extends Component {
               <input type="submit" value="Submit" />
               <br />
             </div>
+            <SubscribersList
+              loggedIn={this.props.loggedIn}
+              toggle={this.props.toggle}
+            />
           </div>
         </form>
       );
