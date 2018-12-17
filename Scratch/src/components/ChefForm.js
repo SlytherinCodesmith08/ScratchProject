@@ -54,8 +54,8 @@ export default class ChefForm extends Component {
               <img src={this.props.user.imageUrl} />
             </div>
             <div id="chef-bio">
-              <h1 id="chef-name">{`${this.props.user.givenName} ${
-                this.props.user.familyName
+              <h1 id="chef-name">{`${this.props.user.lastname} ${
+                this.props.user.firstname
               }`}</h1>
               <h1 id="chef-title">Apprentice Chef</h1>
               <h2 id="chef-joined">Has been cooking for 5 weeks.</h2>

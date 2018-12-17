@@ -3,7 +3,7 @@ import React from 'react';
 export const InfoWindowContent = (event, toggle, subscribe) => {
   const description = document.createElement('div');
   let button;
-  const name = event.givenName + ' ' + event.familyName;
+  const name = event.firstname + ' ' + event.lastname;
   const htmlTemplate = `
   <h1 class='event-host'>Chef: ${name}</h1>
   <h2 class='event-title'>Title: ${event.title}</h2

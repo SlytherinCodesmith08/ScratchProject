@@ -10,9 +10,9 @@ const client = new Client({
 client.connect();
 
 // force: true will drop the table if it already exists
-let addPosting = function (title, description, capacity, lat, lon, cb) {
-    let query = "INSERT INTO postings(title, description, capacity, lat, lon) VALUES($1, $2, $3, $4, $5) RETURNING *";
-    let values = [title, description, capacity, lat, lon];
+let addPosting = function (title, description, capacity, lat, lon, firstname, lastname, time, email, cb) {
+    let query = "INSERT INTO postings(title, description, capacity, lat, lon, firstname, lastname, time, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *";
+    let values = [title, description, capacity, lat, lon, firstname, lastname, time, email];
     return client.query(query, values)
         .then((res) => {
             console.log(res.rows[0]);

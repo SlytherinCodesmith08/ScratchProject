@@ -11,6 +11,7 @@ const accountSid = 'AC40b1c97027706d31c345a9f2bd800768';
 const authToken = '7bb80fc990a84e660c7670f5ae29afd1';
 const client = require('twilio')(accountSid, authToken);
 const multer = require('multer');
+const cors = require('cors');
 const storage = multer.diskStorage({
   destination: './images/',
   filename: (req, file, cb) => {
@@ -28,10 +29,11 @@ const userDB = require('./db/users_db');
 
 var app = express();
 
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
+app.use(cors())
 app.use(logger('dev'));
 app.use(express.json());
 // app.use(express.urlencoded({ extended: false }));
@@ -74,8 +76,8 @@ app.get('/users/:id', function(req, res, next) {
 });
 
 app.post('/postings', function(req, res, next) {
-  let { title, description, capacity, lat, lon } = req.body;
-  postingDB.addPosting(title, description, capacity, lat, lon, () => {
+  let { title, description, capacity, lat, lon, firstname, lastname, time, email } = req.body;
+  postingDB.addPosting(title, description, capacity, lat, lon, firstname, lastname, time, email, () => {
     res.status(204).end();
   });
 });

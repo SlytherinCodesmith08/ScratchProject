@@ -27,13 +27,17 @@ export default class App extends Component {
 
   componentDidMount() {
     this.initMap();
-    this.getUsers();
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (this.state.map !== prevState.map) {
-      this.populateMap();
-      this.initCircle();
+      //this.getUsers();
+      this.getPostings();
+    }
+
+    if(this.state.userList !== prevState.userList) {
+       this.populateMap();
+       this.initCircle();
     }
 
     if (this.state.radius !== prevState.radius) {
@@ -109,11 +113,11 @@ export default class App extends Component {
 
   addMarker(info) {
     if (this.markers[info.id] === undefined) {
-      console.log(info);
+      
       const map = this.state.map;
       const location = {
-        lat: info.currentLocation.lat,
-        lng: info.currentLocation.lon
+        lat: Number(info.lat),
+        lng: Number(info.lon)
       };
       const marker = new google.maps.Marker({
         position: location,
@@ -136,12 +140,15 @@ export default class App extends Component {
         infoWindow.open(map, marker);
       });
 
-      this.sendData(info);
+      console.log('sending data', info);
       this.markers[info.id] = marker;
     }
   }
 
   addPostingMarker(info) {
+    info.firstname = this.state.user.firstname;
+    info.lastname = this.state.user.lastname;
+    info.email = this.state.user.email;
     const map = this.state.map;
     const marker = new google.maps.Marker({
       position: this.state.currentLocation,
@@ -149,8 +156,9 @@ export default class App extends Component {
     });
 
     const description = InfoWindowContent(
-      this.state.user.givenName + ' ' + this.state.user.familyName,
-      info
+      info,
+      this.state.toggle,
+      this.subscribe.bind(this)
     );
     const infoWindow = new google.maps.InfoWindow({
       content: description,
@@ -168,7 +176,6 @@ export default class App extends Component {
   toggle() {
     const toggle = this.state.toggle === 'chef' ? 'tastee' : 'chef';
     for (let key of Object.keys(this.markers)) {
-      console.log(key);
       this.markers[key].setMap(null);
       delete this.markers[key];
     }
@@ -176,8 +183,31 @@ export default class App extends Component {
   }
 
   getUsers() {
-    fetch('/users', {
+    console.log('getting users');
+    const self = this;
+    fetch('http://localhost:3000/users', {
       method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      }
+    })
+      .then(function(response) {
+        
+        return response.json();
+      })
+      .then(function(myJson) {
+        console.log(myJson);
+        self.setState({ userList: myJson });
+      });
+  }
+
+  getPostings() {
+    console.log('getting users');
+    const self = this;
+    fetch('http://localhost:3000/postings', {
+      method: 'GET',
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json; charset=utf-8'
       }
@@ -186,7 +216,8 @@ export default class App extends Component {
         return response.json();
       })
       .then(function(myJson) {
-        this.setState({ userList: myJson });
+        console.log(myJson);
+        self.setState({ userList: myJson });
       });
   }
 
@@ -196,18 +227,14 @@ export default class App extends Component {
   }
 
   sendData(info) {
-    const post = Object.assign({}, this.state.user);
-    post.description = info.description;
-    post.capacity = info.capacity;
-    post.title = info.title;
-    post.lat = this.state.currentLocation.lat;
-    post.lon = this.state.currentLocation.lng;
-    console.log(post);
-    fetch('/postings', {
+    
+    console.log('Sending' , info);
+    fetch('http://localhost:3000/postings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8'
-      }
+      },
+      body: JSON.stringify(info)
     })
       .then(function(response) {
         return response.json();
@@ -223,10 +250,10 @@ export default class App extends Component {
       return (x * Math.PI) / 180;
     };
     var R = 6371e3; // metres
-    var φ1 = toRadians(locationA.lat);
-    var φ2 = toRadians(locationB.lat);
-    var Δφ = toRadians(locationB.lat - locationA.lat);
-    var Δλ = toRadians(locationB.lon - locationA.lng);
+    var φ1 = toRadians(Number(locationA.lat));//toRadians(locationA.lat);
+    var φ2 = toRadians(Number(locationB.lat));
+    var Δφ = toRadians(Number(locationB.lat - locationA.lat));
+    var Δλ = toRadians(Number(locationB.lon - locationA.lng));
 
     var a =
       Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
@@ -238,12 +265,15 @@ export default class App extends Component {
   }
 
   populateMap() {
-    for (let event of events) {
+    
+    for (let event of this.state.userList) {
+      const location = {lat: event.lat, lon: event.lon};
       if (
-        this.distance(this.state.currentLocation, event.currentLocation) <=
+        this.distance(this.state.currentLocation, location) <=
         this.state.radius
-      )
-        this.addMarker(event);
+      ) {
+      this.addMarker(event)
+      }
       else {
         if (this.markers[event.id] !== undefined) {
           this.markers[event.id].setMap(null);
@@ -267,8 +297,8 @@ export default class App extends Component {
       const profileObj = response.profileObj;
       const userObj = {
         email: profileObj.email,
-        familyName: profileObj.familyName,
-        givenName: profileObj.givenName,
+        firstname: profileObj.familyName,
+        lastname: profileObj.givenName,
         location: map.getCenter(),
         imageUrl: profileObj.imageUrl
       };
