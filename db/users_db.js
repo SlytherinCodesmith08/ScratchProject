@@ -1,13 +1,10 @@
-const { Client } = require('pg')
-const client = new Client({
-    user: 'ray',
-    host: 'localhost',
-    database: 'cooking_app',
-    password: '',
-    port: 5432,
-})
+const { Client } = require('pg');
 
-client.connect();
+const url = 'postgres://npswmowv:xofEFECl6YhQcxr9JjuxzxeTxmKeZhf0@baasu.db.elephantsql.com:5432/npswmowv'
+const client = new Client(url);
+client.connect((err) => {
+    console.log(err);
+});
 
 // force: true will drop the table if it already exists
 let addUser = function (firstName, lastName, email, phoneNumber, lat, lon, imagePath, cb) {
@@ -83,4 +80,5 @@ module.exports = {
     getUserByID,
     addUserToPosting,
     getUsersForAPosting,
+    getTest
 }
