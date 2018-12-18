@@ -79,6 +79,5 @@ module.exports = {
     getAllUsers,
     getUserByID,
     addUserToPosting,
-    getUsersForAPosting,
-    getTest
+    getUsersForAPosting
 }
