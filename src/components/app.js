@@ -149,6 +149,8 @@ export default class App extends Component {
     info.firstname = this.state.user.firstname;
     info.lastname = this.state.user.lastname;
     info.email = this.state.user.email;
+    info.lat = this.state.currentLocation.lat;
+    info.lon = this.state.currentLocation.lng;
     const map = this.state.map;
     const marker = new google.maps.Marker({
       position: this.state.currentLocation,
