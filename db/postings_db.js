@@ -1,11 +1,13 @@
-const { Client } = require('pg')
-const client = new Client({
-    user: 'ray',
-    host: 'localhost',
-    database: 'cooking_app',
-    password: '',
-    port: 5432,
-})
+const pg = require('pg')
+var conString = "postgres://jkgvrcpf:R5LeYaE7rvaAKHXe7AV-R2XXHUNwWrXf@baasu.db.elephantsql.com:5432/jkgvrcpf"
+var client = new pg.Client(conString)
+// const client = new Client({
+//     user: 'ray',
+//     host: 'localhost',
+//     database: 'cooking_app',
+//     password: '',
+//     port: 5432,
+// })
 
 client.connect();
 
@@ -75,7 +77,7 @@ let approveUserToPost = function(userID, postingID, cb) {
         });
 }
 
-module.exports = { 
+module.exports = {
     addPosting,
     getAllPostings,
     getPostingByID,
