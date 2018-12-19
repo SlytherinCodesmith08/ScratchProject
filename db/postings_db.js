@@ -1,3 +1,4 @@
+
 const client = require('./sql_db');
 
 // force: true will drop the table if it already exists
