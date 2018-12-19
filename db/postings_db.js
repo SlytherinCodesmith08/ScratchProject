@@ -54,7 +54,9 @@ let addPostingToUser = function (userID, postingID, cb) {
         });
 };
 
-let approveUserToPost = function(userID, postingID, cb) {
+
+
+let approveUserToPost = function (userID, postingID, cb) {
     const query = "UPDATE subscribedusers SET approved=true WHERE uid=$1 AND pid=$2";
     let values = [userID, postingID];
     return client.query(query, values)
@@ -67,7 +69,7 @@ let approveUserToPost = function(userID, postingID, cb) {
         });
 }
 
-module.exports = { 
+module.exports = {
     addPosting,
     getAllPostings,
     getPostingByID,

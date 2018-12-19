@@ -3,7 +3,8 @@ import ChefForm from './ChefForm';
 import SigninButton from './SigninButton';
 import TasteeForm from './TasteeForm';
 import Slider from './Slider';
-
+import ReviewBarPost from './ReviewBarPost';
+import ReviewBarView from './ReviewBarView';
 import { InfoWindowContent } from './InfoWindowContent';
 import { events } from './TestEvents';
 const initialOffset = 0.00068;
@@ -20,9 +21,16 @@ export default class App extends Component {
       user: null,
       currentLocation: null,
       radius: 200,
-      userList: []
+      userList: [],
+      seeReviews: false,
+      postReviews: false,
+      reviews: [],
+      review: ''
     };
     this.markers = {};
+    this.closeWindow = this.closeWindow.bind(this)
+    this.onReviewPostChange = this.onReviewChange.bind(this)
+    this.handleReviewSubmit = this.handleReviewSubmit.bind(this)
   }
 
   componentDidMount() {
@@ -35,9 +43,9 @@ export default class App extends Component {
       this.getPostings();
     }
 
-    if(this.state.userList !== prevState.userList) {
-       this.populateMap();
-       this.initCircle();
+    if (this.state.userList !== prevState.userList) {
+      this.populateMap();
+      this.initCircle();
     }
 
     if (this.state.radius !== prevState.radius) {
@@ -63,7 +71,7 @@ export default class App extends Component {
     if (navigator.geolocation) {
       var self = this;
       navigator.geolocation.getCurrentPosition(
-        function(position) {
+        function (position) {
           var pos = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -86,7 +94,7 @@ export default class App extends Component {
           // map.panTo(marker.position);
           self.setState({ map: map, currentLocation: pos });
         },
-        function() {
+        function () {
           handleLocationError(true, infoWindow, map.getCenter());
         }
       );
@@ -113,7 +121,7 @@ export default class App extends Component {
 
   addMarker(info) {
     if (this.markers[info.id] === undefined) {
-      
+
       const map = this.state.map;
       const location = {
         lat: Number(info.lat),
@@ -127,7 +135,10 @@ export default class App extends Component {
       const description = InfoWindowContent(
         info,
         this.state.toggle,
-        this.subscribe.bind(this)
+        this.subscribe.bind(this),
+        this.handleSeeReviews.bind(this),
+        this.handlePostReviews.bind(this),
+
       );
 
       const infoWindow = new google.maps.InfoWindow({
@@ -136,7 +147,7 @@ export default class App extends Component {
       });
       infoWindow.setPosition(location);
 
-      marker.addListener('click', function() {
+      marker.addListener('click', function () {
         infoWindow.open(map, marker);
       });
 
@@ -160,7 +171,9 @@ export default class App extends Component {
     const description = InfoWindowContent(
       info,
       this.state.toggle,
-      this.subscribe.bind(this)
+      this.subscribe.bind(this),
+      this.handleSeeReviews.bind(this),
+      this.handlePostReviews.bind(this)
     );
     const infoWindow = new google.maps.InfoWindow({
       content: description,
@@ -168,7 +181,7 @@ export default class App extends Component {
     });
     infoWindow.setPosition(this.state.currentLocation);
 
-    marker.addListener('click', function() {
+    marker.addListener('click', function () {
       infoWindow.open(map, marker);
     });
 
@@ -194,11 +207,11 @@ export default class App extends Component {
         'Content-Type': 'application/json; charset=utf-8'
       }
     })
-      .then(function(response) {
-        
+      .then(function (response) {
+
         return response.json();
       })
-      .then(function(myJson) {
+      .then(function (myJson) {
         console.log(myJson);
         self.setState({ userList: myJson });
       });
@@ -214,23 +227,80 @@ export default class App extends Component {
         'Content-Type': 'application/json; charset=utf-8'
       }
     })
-      .then(function(response) {
+      .then(function (response) {
         return response.json();
       })
-      .then(function(myJson) {
+      .then(function (myJson) {
         console.log(myJson);
         self.setState({ userList: myJson });
       });
   }
+  handleSeeReviews(e) {
 
+    fetch(`http://localhost:3000/reviews/${document.querySelector("#chefName").innerHTML}`, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => {
+      return res.json();
+    }).then(reviews => {
+
+      this.setState({
+        reviews: reviews,
+        seeReviews: true
+      })
+    })
+      .catch(err => {
+        console.log('Err in handleSeeReviews: ', err)
+      })
+  }
+
+  handlePostReviews() {
+    this.setState({
+      postReviews: true
+    })
+  }
+  onReviewChange(e) {
+    e.preventDefault()
+    this.setState({
+      review: e.target.value
+    })
+  }
+  handleReviewSubmit(e) {
+    console.log(this.state.user.imageUrl)
+    e.preventDefault()
+    fetch('http://localhost:3000/reviews', {
+      method: 'POST',
+      type: 'cors',
+      body: JSON.stringify({
+        reviewer_name: this.state.user.lastname,
+        date_created: new Date(),
+        imageurl: this.state.user.imageUrl,
+        review: this.state.review,
+        chef_name: document.querySelector('#chefName').innerHTML
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(res => {
+        console.log(res.json())
+        this.setState({
+          review: ''
+        })
+      })
+      .then(() => this.closeWindow())
+  }
   //CODE SECTION FOR FETCH REQUESTS MADE TO THE SERVER
   subscribe() {
     //Fetch Code Goes Here
   }
 
   sendData(info) {
-    
-    console.log('Sending' , info);
+
+    console.log('Sending', info);
     fetch('http://localhost:3000/postings', {
       method: 'POST',
       headers: {
@@ -238,10 +308,10 @@ export default class App extends Component {
       },
       body: JSON.stringify(info)
     })
-      .then(function(response) {
+      .then(function (response) {
         return response.json();
       })
-      .then(function(myJson) {
+      .then(function (myJson) {
         console.log(JSON.stringify(myJson));
       });
   }
@@ -267,14 +337,14 @@ export default class App extends Component {
   }
 
   populateMap() {
-    
+
     for (let event of this.state.userList) {
-      const location = {lat: event.lat, lon: event.lon};
+      const location = { lat: event.lat, lon: event.lon };
       if (
         this.distance(this.state.currentLocation, location) <=
         this.state.radius
       ) {
-      this.addMarker(event)
+        this.addMarker(event)
       }
       else {
         if (this.markers[event.id] !== undefined) {
@@ -290,7 +360,13 @@ export default class App extends Component {
     circle.setRadius(slider * UNITS);
     this.setState({ radius: slider * UNITS });
   }
+  closeWindow(e) {
 
+    this.setState({
+      seeReviews: false,
+      postReviews: false
+    })
+  }
   toggleSignIn(response) {
     const loggedIn = this.state.loggedIn === true ? false : true;
     const map = this.state.map;
@@ -339,6 +415,10 @@ export default class App extends Component {
                 UNITS={UNITS}
                 updateRadius={this.updateRadius.bind(this)}
               />
+              {this.state.seeReviews &&
+                <ReviewBarView closeWindow={this.closeWindow} reviews={this.state.reviews} />}
+              {this.state.postReviews &&
+                <ReviewBarPost closeWindow={this.closeWindow} handleReviewSubmit={this.handleReviewSubmit} onReviewPostChange={this.onReviewPostChange} />}
             </section>
           </div>
           <div id="content-right">
