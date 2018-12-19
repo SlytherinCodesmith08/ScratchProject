@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const mime = require('mime');
 const accountSid = 'AC40b1c97027706d31c345a9f2bd800768';
 const authToken = '7bb80fc990a84e660c7670f5ae29afd1';
-const client = require('twilio')(accountSid, authToken);
+const twilioClient = require('twilio')(accountSid, authToken);
 const multer = require('multer');
 const cors = require('cors');
 const storage = multer.diskStorage({
@@ -24,8 +24,7 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage });
 
-const postingDB = require('./db/postings_db');
-const userDB = require('./db/users_db');
+const sql_db = require('./db/sql_db');
 
 var app = express();
 
@@ -49,87 +48,87 @@ app.get('/', function(req, res, next) {
 app.post('/users', function(req, res, next) {
   let { firstName, lastName, email, phoneNumber, lat, lon } = req.body;
   let { path } = "";//req.file;
-  return userDB.addUser(firstName, lastName, email, phoneNumber, lat, lon, path, () => {
+  return sql_db.addUser(firstName, lastName, email, phoneNumber, lat, lon, path, () => {
     res.status(204).end();
   });
 });
 
 app.get('/users', function(req, res, next) {
-  return userDB.getAllUsers((data) => {
+  return sql_db.getAllUsers((data) => {
     res.send(data);
   });
 });
 
 app.get('/users/:id', function(req, res, next) {
   let userID = req.params.id;
-  userDB.getUserByID(userID, (data) => {
-    // client.messages
+  sql_db.getUserByID(userID, (data) => {
+    // twilioClient.messages
     //   .create({
-    //     body: 'This is the ship that made the Kessel Run in fourteen parsecs?',
-    //     from: '+19042043073',
-    //     to: '+13477591423'
-    //   })
-    //   .then(message => console.log(message.sid))
-    //   .done();
-    res.send(data);
+      //     body: 'This is the ship that made the Kessel Run in fourteen parsecs?',
+      //     from: '+19042043073',
+      //     to: '+13477591423'
+      //   })
+      //   .then(message => console.log(message.sid))
+      //   .done();
+      res.send(data);
+    });
   });
-});
-
-app.post('/postings', function(req, res, next) {
-  let { title, description, capacity, lat, lon, firstname, lastname, time, email } = req.body;
-  postingDB.addPosting(title, description, capacity, lat, lon, firstname, lastname, time, email, () => {
-    res.status(204).end();
+  
+  app.post('/postings', function(req, res, next) {
+    let { title, description, capacity, lat, lon, firstname, lastname, time, email } = req.body;
+    sql_db.addPosting(title, description, capacity, lat, lon, firstname, lastname, time, email, () => {
+      res.status(204).end();
+    });
   });
-});
-
-app.get('/postings', function(req, res, next) {
-  postingDB.getAllPostings((data) => {
-    res.send(data);
+  
+  app.get('/postings', function(req, res, next) {
+    sql_db.getAllPostings((data) => {
+      res.send(data);
+    });
   });
-});
-
-app.get('/postings/:id', function(req, res, next) {
-  let postingID = req.params.id;
-  postingDB.getPostingByID(postingID, (data) => {
-    res.send(data);
+  
+  app.get('/postings/:id', function(req, res, next) {
+    let postingID = req.params.id;
+    sql_db.getPostingByID(postingID, (data) => {
+      res.send(data);
+    });
   });
-});
-
-app.post('/addUser/:uid/toPost/:pid', function(req, res, next) {
-  let {uid, pid} = req.params;
-  userDB.addUserToPosting(uid, pid, () => {
-    res.status(204).end();
+  
+  app.post('/addUser/:uid/toPost/:pid', function(req, res, next) {
+    let {uid, pid} = req.params;
+    sql_db.addUserToPosting(uid, pid, () => {
+      res.status(204).end();
+    });
   });
-});
-
-app.get('/getSubscribedusers/:pid', function(req, res, next) {
-  let { pid } = req.params;
-  userDB.getUsersForAPosting(1, (data) => {
-    res.send(data);
+  
+  app.get('/getSubscribedusers/:pid', function(req, res, next) {
+    let { pid } = req.params;
+    sql_db.getUsersForAPosting(1, (data) => {
+      res.send(data);
+    });
   });
-});
-
-app.post('/approveUser/:uid/toPost/:pid', function(req, res, next) {
-  let { uid, pid } = req.params;
-  postingDB.approveUserToPost(uid, pid, () => {
-    res.end();
+  
+  app.post('/approveUser/:uid/toPost/:pid', function(req, res, next) {
+    let { uid, pid } = req.params;
+    sql_db.approveUserToPost(uid, pid, () => {
+      res.end();
+    });
   });
-});
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+  
+  // catch 404 and forward to error handler
+  app.use(function(req, res, next) {
+    next(createError(404));
+  });
+  
+  // error handler
+  app.use(function(err, req, res, next) {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
+  });
+  
+  module.exports = app;
